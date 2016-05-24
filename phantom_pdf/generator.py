@@ -84,7 +84,7 @@ class RequestToPDF(object):
         domain = netloc
         return '{protocol}://{domain}{path}'.format(
             protocol=protocol,
-            domain=getattr(settings, 'PHANTOMJS', domain),
+            domain=getattr(settings, 'PHANTOMJS_DOMAIN', domain),
             path=path)
 
     def _save_cookie_data(self, request):
