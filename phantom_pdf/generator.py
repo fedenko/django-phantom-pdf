@@ -155,6 +155,12 @@ class RequestToPDF(object):
         # Some servers have SSLv3 disabled, leave
         # phantomjs connect with others than SSLv3
         ssl_protocol = "--ssl-protocol=ANY"
+        
+        # PIPE hangs if the input is more than a couple
+        # of pages (limit is 65k) so we use tmp files
+        # - http://stackoverflow.com/questions/24979333/why-does-popen-hang-when-used-in-django-view/24979432#24979432
+        # - https://thraxil.org/users/anders/posts/2008/03/13/Subprocess-Hanging-PIPE-is-your-enemy/
+        from tempfile import TemporaryFile
         try:
             phandle = Popen([
                 self.PHANTOMJS_BIN,
@@ -167,7 +173,7 @@ class RequestToPDF(object):
                 format,
                 orientation,
                 json.dumps(margin),
-            ], close_fds=True, stdout=PIPE, stderr=STDOUT)
+            ], close_fds=True, stdout=TemporaryFile(delete=True), stderr=TemporaryFile(delete=True))
             phandle.communicate()
 
         finally:
