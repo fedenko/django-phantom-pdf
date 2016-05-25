@@ -130,7 +130,8 @@ class RequestToPDF(object):
                        format=None,
                        orientation=None,
                        margin=None,
-                       make_response=True):
+                       make_response=True,
+                       url=None):
         """Receive request, basename and return a PDF in an HttpResponse.
             If `make_response` is True return an HttpResponse otherwise file_src. """
 
@@ -146,11 +147,14 @@ class RequestToPDF(object):
             pass
 
         cookie_file = self._save_cookie_data(request)
-        url = self._build_url(request)
+        if not url:
+            url = self._build_url(request)
 
-        domain = urlparse.urlsplit(
-            request.build_absolute_uri()
-        ).netloc.split(':')[0]
+            domain = urlparse.urlsplit(
+                request.build_absolute_uri()
+            ).netloc.split(':')[0]
+        else:
+            domain = urlparse.urlsplit(url).netloc.split(':')[0]
 
         # Some servers have SSLv3 disabled, leave
         # phantomjs connect with others than SSLv3
@@ -187,7 +191,8 @@ def render_to_pdf(request, basename,
                   format=None,
                   orientation=None,
                   margin=None,
-                  make_response=True):
+                  make_response=True,
+                  url=None):
     """Helper function for rendering a request to pdf.
     Arguments:
         request = django request.
@@ -198,5 +203,5 @@ def render_to_pdf(request, basename,
     """
     request2pdf = RequestToPDF()
     response = request2pdf.request_to_pdf(request, basename, format=format,
-                                          orientation=orientation, margin=margin, make_response=make_response)
+                                          orientation=orientation, margin=margin, make_response=make_response, url=url)
     return response
