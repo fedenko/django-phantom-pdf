@@ -173,7 +173,7 @@ class RequestToPDF(object):
                 format,
                 orientation,
                 json.dumps(margin),
-            ], close_fds=True, stdout=TemporaryFile(delete=True), stderr=TemporaryFile(delete=True))
+            ], close_fds=True, stdout=TemporaryFile(), stderr=TemporaryFile())
             phandle.communicate()
 
         finally:
