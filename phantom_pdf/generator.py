@@ -23,6 +23,7 @@ DEFAULT_SETTINGS = dict(
     PHANTOMJS_GENERATE_PDF=GENERATE_PDF_JS,
     PHANTOMJS_PDF_DIR=os.path.join(PHANTOM_ROOT_DIR, 'pdfs'),
     PHANTOMJS_BIN='phantomjs',
+    PHANTOMJS_ACCEPT_LANGUAGE='en',
     PHANTOMJS_FORMAT='A4',
     PHANTOMJS_ORIENTATION='landscape',
     PHANTOMJS_MARGIN=0,
@@ -61,6 +62,7 @@ class RequestToPDF(object):
                 'PHANTOMJS_BIN',
                 'PHANTOMJS_GENERATE_PDF',
                 'KEEP_PDF_FILES',
+                'PHANTOMJS_ACCEPT_LANGUAGE',
                 'PHANTOMJS_FORMAT',
                 'PHANTOMJS_ORIENTATION',
                 'PHANTOMJS_MARGIN']:
@@ -159,7 +161,7 @@ class RequestToPDF(object):
         # Some servers have SSLv3 disabled, leave
         # phantomjs connect with others than SSLv3
         ssl_protocol = "--ssl-protocol=ANY"
-        
+
         # PIPE hangs if the input is more than a couple
         # of pages (limit is 65k) so we use tmp files
         # - http://stackoverflow.com/questions/24979333/why-does-popen-hang-when-used-in-django-view/24979432#24979432
@@ -174,6 +176,7 @@ class RequestToPDF(object):
                 file_src,
                 cookie_file,
                 domain,
+                self.PHANTOMJS_ACCEPT_LANGUAGE,
                 format,
                 orientation,
                 json.dumps(margin),

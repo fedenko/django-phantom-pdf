@@ -18,9 +18,10 @@ address = system.args[1];
 output = system.args[2];
 cookie_file = system.args[3];
 domain = system.args[4];
-format = system.args[5];
-orientation = system.args[6];
-margin = system.args[7];
+accept_language = system.args[5];
+format = system.args[6];
+orientation = system.args[7];
+margin = system.args[8];
 
 info = fs.read(cookie_file).split(' ');
 csrftoken = info[0];
@@ -32,6 +33,10 @@ phantom.addCookie({'domain':domain, 'name':'csrftoken',
                    'value': csrftoken});
 phantom.addCookie({'domain':domain, 'name':'sessionid',
                    'value': sessionid});
+
+page.customHeaders = {
+    "Accept-Language": accept_language
+};
 
 
 // Set the page size and orientation
