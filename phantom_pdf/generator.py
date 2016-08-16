@@ -1,15 +1,14 @@
 # -*- coding: utf-8 -*-
-import json
 import logging
 from subprocess import Popen, STDOUT, PIPE
 import os
 import phantom_pdf_bin
-import urlparse
 import uuid
 
 from django.conf import settings
 from django.http import HttpResponse
 
+from phantom_pdf.compat import json, urlsplit
 
 logger = logging.getLogger(__name__)
 
@@ -80,7 +79,7 @@ class RequestToPDF(object):
 
     def _build_url(self, request):
         """Build the url for the request."""
-        scheme, netloc, path, query, fragment = urlparse.urlsplit(
+        scheme, netloc, path, query, fragment = urlsplit(
             request.build_absolute_uri())
         protocol = scheme
         domain = netloc
@@ -152,11 +151,11 @@ class RequestToPDF(object):
         if not url:
             url = self._build_url(request)
 
-            domain = urlparse.urlsplit(
+            domain = urlsplit(
                 request.build_absolute_uri()
             ).netloc.split(':')[0]
         else:
-            domain = urlparse.urlsplit(url).netloc.split(':')[0]
+            domain = urlsplit(url).netloc.split(':')[0]
 
         # Some servers have SSLv3 disabled, leave
         # phantomjs connect with others than SSLv3
