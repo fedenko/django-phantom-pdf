@@ -19,7 +19,7 @@ setup(
     author='Juan Carizza, Tim Zenderman, Emiliano Dalla Verde Marcozzi',
     author_email='juan.carizza@gmail.com, tzenderman@gmail.com, edvm@fedoraproject.org',
     download_url='https://github.com/BananaDesk/django-phantom-pdf/archive/v0.3.tar.gz',
-    test_suite="runtests",
+    test_suite="runtests.runtests",
     classifiers=[
             'Environment :: Web Environment',
             'Framework :: Django',

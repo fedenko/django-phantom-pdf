@@ -42,4 +42,5 @@ nosetests.xml
 *.sw[op]
 
 # Node files
+/tests/node_modules/
 /node_modules/
