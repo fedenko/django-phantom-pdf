@@ -40,3 +40,6 @@ nosetests.xml
 
 # Vim
 *.sw[op]
+
+# Node files
+/node_modules/

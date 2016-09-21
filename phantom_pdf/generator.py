@@ -26,6 +26,7 @@ DEFAULT_SETTINGS = dict(
     PHANTOMJS_FORMAT='A4',
     PHANTOMJS_ORIENTATION='landscape',
     PHANTOMJS_MARGIN=0,
+    PHANTOMJS_PAPER_SIZE={},
     KEEP_PDF_FILES=False,
 )
 
@@ -64,7 +65,8 @@ class RequestToPDF(object):
                 'PHANTOMJS_ACCEPT_LANGUAGE',
                 'PHANTOMJS_FORMAT',
                 'PHANTOMJS_ORIENTATION',
-                'PHANTOMJS_MARGIN']:
+                'PHANTOMJS_MARGIN',
+                'PHANTOMJS_PAPER_SIZE']:
             if getattr(self, attr, None) is None:
                 value = getattr(settings, attr, None)
                 if value is None:
@@ -87,22 +89,6 @@ class RequestToPDF(object):
             protocol=protocol,
             domain=domain,
             path=path)
-
-    def _save_cookie_data(self, request):
-        """Save csrftoken and sessionid in a cookie file for authentication."""
-        cookie_file = ''.join((
-            os.path.join(
-                self.PHANTOMJS_COOKIE_DIR, str(uuid.uuid1())
-            ), '.cookie.txt'
-        ))
-        with open(cookie_file, 'w+') as fh:
-            cookie = ''.join((
-                request.COOKIES.get(settings.CSRF_COOKIE_NAME, 'nocsrftoken'),
-                ' ',
-                request.COOKIES.get(settings.SESSION_COOKIE_NAME, 'nosessionid')
-            ))
-            fh.write(cookie)
-        return cookie_file
 
     def _set_source_file_name(self, basename=str(uuid.uuid1())):
         """Return the original source filename of the pdf."""
@@ -131,6 +117,7 @@ class RequestToPDF(object):
                        format=None,
                        orientation=None,
                        margin=None,
+                       paper_size=None,
                        make_response=True,
                        url=None):
         """Receive request, basename and return a PDF in an HttpResponse.
@@ -139,6 +126,11 @@ class RequestToPDF(object):
         format = format or self.PHANTOMJS_FORMAT
         orientation = orientation or self.PHANTOMJS_ORIENTATION
         margin = margin or self.PHANTOMJS_MARGIN
+        paper_size = paper_size or self.PHANTOMJS_PAPER_SIZE or {
+            "format": format,
+            "orientation": orientation,
+            "margin": margin
+        }
 
         file_src = self._set_source_file_name(basename=basename)
         try:
@@ -147,7 +139,6 @@ class RequestToPDF(object):
         except OSError:
             pass
 
-        cookie_file = self._save_cookie_data(request)
         if not url:
             url = self._build_url(request)
 
@@ -156,6 +147,10 @@ class RequestToPDF(object):
             ).netloc.split(':')[0]
         else:
             domain = urlsplit(url).netloc.split(':')[0]
+
+        cookies = {
+            domain: request.COOKIES
+        }
 
         # Some servers have SSLv3 disabled, leave
         # phantomjs connect with others than SSLv3
@@ -166,6 +161,7 @@ class RequestToPDF(object):
         # - http://stackoverflow.com/questions/24979333/why-does-popen-hang-when-used-in-django-view/24979432#24979432
         # - https://thraxil.org/users/anders/posts/2008/03/13/Subprocess-Hanging-PIPE-is-your-enemy/
         from tempfile import NamedTemporaryFile
+        import sys
         try:
             phandle = Popen([
                 self.PHANTOMJS_BIN,
@@ -173,18 +169,15 @@ class RequestToPDF(object):
                 self.PHANTOMJS_GENERATE_PDF,
                 url,
                 file_src,
-                cookie_file,
-                domain,
+                json.dumps(cookies),
                 self.PHANTOMJS_ACCEPT_LANGUAGE,
-                format,
-                orientation,
-                json.dumps(margin),
+                json.dumps(paper_size)
+            # ], close_fds=True, stdout=sys.stdout, stderr=sys.stderr)
             ], close_fds=True, stdout=NamedTemporaryFile(delete=True), stderr=NamedTemporaryFile(delete=True))
             phandle.communicate()
 
         finally:
-            # Make sure we remove the cookie file.
-            os.remove(cookie_file)
+            pass
 
         return self._return_response(file_src, basename) if make_response else file_src
 

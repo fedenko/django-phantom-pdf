@@ -1,0 +1,16 @@
+{
+  "name": "django-phantom-pdf",
+  "version": "0.3.0",
+  "description": "A simple django app for creating pdf files.",
+  "devDependencies": {
+    "coffee-loader": "^0.7.2",
+    "gulp": "^3.9.1",
+    "gulp-plumber": "^1.0.1",
+    "gulp-sourcemaps": "^1.6.0",
+    "nunjucks": "^2.5.2",
+    "webpack-stream": "^3.2.0"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}
