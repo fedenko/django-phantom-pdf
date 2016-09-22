@@ -33,11 +33,11 @@ page.customHeaders = 'Accept-Language': acceptLanguage
 # Set the page size and orientation
 if paperSize.header
   if paperSize.header.contents
-    header_contents = paperSize.footer.contents
+    header_contents = paperSize.header.contents
     paperSize.header.contents = phantom.callback((pageNum, numPages) ->
       sformat header_contents,
         page_num: pageNum
-        num_pages: pageNum
+        num_pages: numPages
     )
     # console.log paperSize.header.contents
 if paperSize.footer
@@ -46,7 +46,7 @@ if paperSize.footer
     paperSize.footer.contents = phantom.callback((pageNum, numPages) ->
       sformat footer_contents,
         page_num: pageNum
-        num_pages: pageNum
+        num_pages: numPages
     )
     # console.log paperSize.footer.contents
 

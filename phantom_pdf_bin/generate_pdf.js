@@ -86,11 +86,11 @@
 	
 	if (paperSize.header) {
 	  if (paperSize.header.contents) {
-	    header_contents = paperSize.footer.contents;
+	    header_contents = paperSize.header.contents;
 	    paperSize.header.contents = phantom.callback(function(pageNum, numPages) {
 	      return sformat(header_contents, {
 	        page_num: pageNum,
-	        num_pages: pageNum
+	        num_pages: numPages
 	      });
 	    });
 	  }
@@ -102,7 +102,7 @@
 	    paperSize.footer.contents = phantom.callback(function(pageNum, numPages) {
 	      return sformat(footer_contents, {
 	        page_num: pageNum,
-	        num_pages: pageNum
+	        num_pages: numPages
 	      });
 	    });
 	  }
