@@ -15,10 +15,11 @@ INSTALLED_APPS = [
     'django.contrib.sites',
     'django.contrib.sessions',
     'django.contrib.messages',
-    'django.contrib.staticfiles'
+    'django.contrib.staticfiles',
+    'tests.test_app'
 ]
 
-ROOT_URLCONF = 'admin.site.urls'
+ROOT_URLCONF = 'tests.urls'
 
 TEMPLATES = [
     {
