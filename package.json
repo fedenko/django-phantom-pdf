@@ -7,7 +7,6 @@
     "gulp": "^3.9.1",
     "gulp-plumber": "^1.0.1",
     "gulp-sourcemaps": "^1.6.0",
-    "nunjucks": "^2.5.2",
     "phantomjs-prebuilt": "^2.1.12",
     "webpack-stream": "^3.2.0"
   },

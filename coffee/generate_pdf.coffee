@@ -7,8 +7,9 @@ fs = require('fs')
 # Read the url and output file location from the command line argument
 # Read the cookie file and split it by spaces
 # Because the way I constructed this file, separate each field using spaces
-nunjucks = require('nunjucks')
-nunjucks.configure autoescape: true
+sformat = (template, data) ->
+  template.replace /{{(.*?)}}/g, (m, n) ->
+    eval 'data.' + n
 
 address = system.args[1]
 output = system.args[2]
@@ -34,7 +35,7 @@ if paperSize.header
   if paperSize.header.contents
     header_contents = paperSize.footer.contents
     paperSize.header.contents = phantom.callback((pageNum, numPages) ->
-      nunjucks.renderString header_contents,
+      sformat header_contents,
         page_num: pageNum
         num_pages: pageNum
     )
@@ -43,7 +44,7 @@ if paperSize.footer
   if paperSize.footer.contents
     footer_contents = paperSize.footer.contents
     paperSize.footer.contents = phantom.callback((pageNum, numPages) ->
-      nunjucks.renderString footer_contents,
+      sformat footer_contents,
         page_num: pageNum
         num_pages: pageNum
     )
@@ -52,14 +53,6 @@ if paperSize.footer
 page.paperSize = paperSize
 
 
-# console.log address
-# console.log output
-# console.log cookies
-# console.log acceptLanguage
-# console.log format
-# console.log orientation
-# console.log margin
-# console.log paperSize,
 # Now we have everything settled, let's render the page
 
 page.open address, (status) ->
@@ -69,10 +62,6 @@ page.open address, (status) ->
     phantom.exit()
   else
     # Now create the output file and exit PhantomJS
-    # cookies = page.cookies
-    # console.log 'Listing cookies:'
-    # for i of cookies
-    #   console.log cookies[i].name + '=' + cookies[i].value
     page.render output
     phantom.exit()
   return
