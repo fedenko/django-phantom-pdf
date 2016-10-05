@@ -16,6 +16,8 @@ output = system.args[2]
 cookies = JSON.parse(system.args[3])
 acceptLanguage = system.args[4]
 paperSize = JSON.parse(system.args[5])
+viewportSize = JSON.parse(system.args[6]) if system.args.length >= 7
+compensateForPhantomV2PdfRenderingBug = parseFloat(system.args[7]) if system.args.length == 8
 
 
 # Now we can add cookies into phantomjs, so when it renders the page, it
@@ -51,6 +53,7 @@ if paperSize.footer
     # console.log paperSize.footer.contents
 
 page.paperSize = paperSize
+page.viewportSize = viewportSize if Object.keys(viewportSize).length
 
 
 # Now we have everything settled, let's render the page
@@ -62,6 +65,10 @@ page.open address, (status) ->
     phantom.exit()
   else
     # Now create the output file and exit PhantomJS
+    if compensateForPhantomV2PdfRenderingBug > 0 and compensateForPhantomV2PdfRenderingBug != 1
+      page.evaluate ((zoom) ->
+        document.querySelector('body').style.zoom = zoom
+        ), compensateForPhantomV2PdfRenderingBug
     page.render output
     phantom.exit()
   return

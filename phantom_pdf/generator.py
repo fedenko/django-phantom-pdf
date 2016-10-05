@@ -27,6 +27,8 @@ DEFAULT_SETTINGS = dict(
     PHANTOMJS_ORIENTATION='landscape',
     PHANTOMJS_MARGIN=0,
     PHANTOMJS_PAPER_SIZE={},
+    PHANTOMJS_VIEWPORT_SIZE={},
+    PHANTOMJS_COMPENSATE_FOR_V2_PDF_RENDERING_BUG=None,
     KEEP_PDF_FILES=False,
 )
 
@@ -66,7 +68,9 @@ class RequestToPDF(object):
                 'PHANTOMJS_FORMAT',
                 'PHANTOMJS_ORIENTATION',
                 'PHANTOMJS_MARGIN',
-                'PHANTOMJS_PAPER_SIZE']:
+                'PHANTOMJS_PAPER_SIZE',
+                'PHANTOMJS_VIEWPORT_SIZE',
+                'PHANTOMJS_COMPENSATE_FOR_V2_PDF_RENDERING_BUG']:
             if getattr(self, attr, None) is None:
                 value = getattr(settings, attr, None)
                 if value is None:
@@ -118,6 +122,8 @@ class RequestToPDF(object):
                        orientation=None,
                        margin=None,
                        paper_size=None,
+                       viewport_size=None,
+                       compensate_for_v2_pdf_rendering_bug=None,
                        make_response=True,
                        url=None):
         """Receive request, basename and return a PDF in an HttpResponse.
@@ -131,6 +137,13 @@ class RequestToPDF(object):
             "orientation": orientation,
             "margin": margin
         }
+
+        viewport_size = viewport_size or self.PHANTOMJS_VIEWPORT_SIZE
+        compensate_for_v2_pdf_rendering_bug = (
+            compensate_for_v2_pdf_rendering_bug or self.PHANTOMJS_COMPENSATE_FOR_V2_PDF_RENDERING_BUG
+        )
+        if compensate_for_v2_pdf_rendering_bug is None:
+            compensate_for_v2_pdf_rendering_bug = 0
 
         file_src = self._set_source_file_name(basename=basename)
         try:
@@ -171,7 +184,9 @@ class RequestToPDF(object):
                 file_src,
                 json.dumps(cookies),
                 self.PHANTOMJS_ACCEPT_LANGUAGE,
-                json.dumps(paper_size)
+                json.dumps(paper_size),
+                json.dumps(viewport_size),
+                str(compensate_for_v2_pdf_rendering_bug)
             # ], close_fds=True, stdout=sys.stdout, stderr=sys.stderr)
             ], close_fds=True, stdout=NamedTemporaryFile(delete=True), stderr=NamedTemporaryFile(delete=True))
             phandle.communicate()

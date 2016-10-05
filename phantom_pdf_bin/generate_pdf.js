@@ -44,7 +44,7 @@
 /* 0 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var acceptLanguage, address, cookies, domain, domain_cookies, footer_contents, fs, header_contents, name, output, page, paperSize, sformat, system, value;
+	var acceptLanguage, address, compensateForPhantomV2PdfRenderingBug, cookies, domain, domain_cookies, footer_contents, fs, header_contents, name, output, page, paperSize, sformat, system, value, viewportSize;
 	
 	page = __webpack_require__(1).create();
 	
@@ -67,6 +67,14 @@
 	acceptLanguage = system.args[4];
 	
 	paperSize = JSON.parse(system.args[5]);
+	
+	if (system.args.length >= 7) {
+	  viewportSize = JSON.parse(system.args[6]);
+	}
+	
+	if (system.args.length === 8) {
+	  compensateForPhantomV2PdfRenderingBug = parseFloat(system.args[7]);
+	}
 	
 	for (domain in cookies) {
 	  domain_cookies = cookies[domain];
@@ -110,11 +118,20 @@
 	
 	page.paperSize = paperSize;
 	
+	if (Object.keys(viewportSize).length) {
+	  page.viewportSize = viewportSize;
+	}
+	
 	page.open(address, function(status) {
 	  if (status !== 'success') {
 	    console.log('Unable to load the address!');
 	    phantom.exit();
 	  } else {
+	    if (compensateForPhantomV2PdfRenderingBug > 0 && compensateForPhantomV2PdfRenderingBug !== 1) {
+	      page.evaluate((function(zoom) {
+	        return document.querySelector('body').style.zoom = zoom;
+	      }), compensateForPhantomV2PdfRenderingBug);
+	    }
 	    page.render(output);
 	    phantom.exit();
 	  }
