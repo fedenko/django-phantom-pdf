@@ -3,6 +3,11 @@ page = require('webpage').create()
 # Require the system module so I can read the command line arguments
 system = require('system')
 # Require the FileSystem module, so I can read the cookie file
+
+console.error = ->
+  system.stderr.write Array::join.call(arguments, ' ') + '\n'
+  return
+
 fs = require('fs')
 # Read the url and output file location from the command line argument
 # Read the cookie file and split it by spaces
@@ -61,8 +66,8 @@ page.viewportSize = viewportSize if Object.keys(viewportSize).length
 page.open address, (status) ->
   if status != 'success'
     # If PhantomJS failed to reach the address, print a message
-    console.log 'Unable to load the address!'
-    phantom.exit()
+    console.error "Unable to load the address \"#{address}\""
+    phantom.exit(1)
   else
     # Now create the output file and exit PhantomJS
     if compensateForPhantomV2PdfRenderingBug > 0 and compensateForPhantomV2PdfRenderingBug != 1
@@ -70,5 +75,5 @@ page.open address, (status) ->
         document.querySelector('body').style.zoom = zoom
         ), compensateForPhantomV2PdfRenderingBug
     page.render output
-    phantom.exit()
+    phantom.exit(0)
   return

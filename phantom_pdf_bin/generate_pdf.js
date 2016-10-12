@@ -50,6 +50,10 @@
 	
 	system = __webpack_require__(2);
 	
+	console.error = function() {
+	  system.stderr.write(Array.prototype.join.call(arguments, ' ') + '\n');
+	};
+	
 	fs = __webpack_require__(3);
 	
 	sformat = function(template, data) {
@@ -124,8 +128,8 @@
 	
 	page.open(address, function(status) {
 	  if (status !== 'success') {
-	    console.log('Unable to load the address!');
-	    phantom.exit();
+	    console.error("Unable to load the address \"" + address + "\"");
+	    phantom.exit(1);
 	  } else {
 	    if (compensateForPhantomV2PdfRenderingBug > 0 && compensateForPhantomV2PdfRenderingBug !== 1) {
 	      page.evaluate((function(zoom) {
@@ -133,7 +137,7 @@
 	      }), compensateForPhantomV2PdfRenderingBug);
 	    }
 	    page.render(output);
-	    phantom.exit();
+	    phantom.exit(0);
 	  }
 	});
 

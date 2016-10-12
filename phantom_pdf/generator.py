@@ -1,14 +1,15 @@
 # -*- coding: utf-8 -*-
 import logging
-from subprocess import Popen, STDOUT, PIPE
 import os
-import phantom_pdf_bin
+import subprocess
+import tempfile
 import uuid
+import phantom_pdf_bin
 
 from django.conf import settings
 from django.http import HttpResponse
 
-from phantom_pdf.compat import json, urlsplit
+from phantom_pdf.compat import json, urlsplit, is_py3
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +23,11 @@ DEFAULT_SETTINGS = dict(
     PHANTOMJS_GENERATE_PDF=GENERATE_PDF_JS,
     PHANTOMJS_PDF_DIR=os.path.join(PHANTOM_ROOT_DIR, 'pdfs'),
     PHANTOMJS_BIN='phantomjs',
+    # Some servers have SSLv3 disabled, leave
+    # phantomjs connect with others than SSLv3
+    PHANTOMJS_OPTIONS={
+        "ssl-protocol":"ANY"
+    },
     PHANTOMJS_ACCEPT_LANGUAGE='en',
     PHANTOMJS_FORMAT='A4',
     PHANTOMJS_ORIENTATION='landscape',
@@ -32,6 +38,13 @@ DEFAULT_SETTINGS = dict(
     KEEP_PDF_FILES=False,
 )
 
+def option_to_str((option_name, arg)):
+    if isinstance(arg, bool):
+        arg = str(arg).lower()
+    return "=".join(["--{0}".format(option_name), arg])
+
+class PhantomJSError(Exception):
+    pass
 
 class RequestToPDF(object):
     """Class for rendering a requested page to a PDF."""
@@ -62,6 +75,7 @@ class RequestToPDF(object):
                 'PHANTOMJS_COOKIE_DIR',
                 'PHANTOMJS_PDF_DIR',
                 'PHANTOMJS_BIN',
+                'PHANTOMJS_OPTIONS',
                 'PHANTOMJS_GENERATE_PDF',
                 'KEEP_PDF_FILES',
                 'PHANTOMJS_ACCEPT_LANGUAGE',
@@ -124,6 +138,7 @@ class RequestToPDF(object):
                        paper_size=None,
                        viewport_size=None,
                        compensate_for_v2_pdf_rendering_bug=None,
+                       options=None,
                        make_response=True,
                        url=None):
         """Receive request, basename and return a PDF in an HttpResponse.
@@ -145,6 +160,11 @@ class RequestToPDF(object):
         if compensate_for_v2_pdf_rendering_bug is None:
             compensate_for_v2_pdf_rendering_bug = 0
 
+        options = options or self.PHANTOMJS_OPTIONS
+
+        if hasattr(options, 'items'):
+            options = map(option_to_str, options.items())
+
         file_src = self._set_source_file_name(basename=basename)
         try:
             os.remove(file_src)
@@ -165,34 +185,43 @@ class RequestToPDF(object):
             domain: request.COOKIES
         }
 
-        # Some servers have SSLv3 disabled, leave
-        # phantomjs connect with others than SSLv3
-        ssl_protocol = "--ssl-protocol=ANY"
+        cmd_to_run = [self.PHANTOMJS_BIN]
+
+        if options:
+            cmd_to_run += options
+
+        cmd_to_run += [
+            self.PHANTOMJS_GENERATE_PDF,
+            url,
+            file_src,
+            json.dumps(cookies),
+            self.PHANTOMJS_ACCEPT_LANGUAGE,
+            json.dumps(paper_size),
+            json.dumps(viewport_size),
+            str(compensate_for_v2_pdf_rendering_bug)
+        ]
 
         # PIPE hangs if the input is more than a couple
         # of pages (limit is 65k) so we use tmp files
         # - http://stackoverflow.com/questions/24979333/why-does-popen-hang-when-used-in-django-view/24979432#24979432
         # - https://thraxil.org/users/anders/posts/2008/03/13/Subprocess-Hanging-PIPE-is-your-enemy/
-        from tempfile import NamedTemporaryFile
-        import sys
-        try:
-            phandle = Popen([
-                self.PHANTOMJS_BIN,
-                ssl_protocol,
-                self.PHANTOMJS_GENERATE_PDF,
-                url,
-                file_src,
-                json.dumps(cookies),
-                self.PHANTOMJS_ACCEPT_LANGUAGE,
-                json.dumps(paper_size),
-                json.dumps(viewport_size),
-                str(compensate_for_v2_pdf_rendering_bug)
-            # ], close_fds=True, stdout=sys.stdout, stderr=sys.stderr)
-            ], close_fds=True, stdout=NamedTemporaryFile(delete=True), stderr=NamedTemporaryFile(delete=True))
-            phandle.communicate()
+        with tempfile.TemporaryFile() as stdout_file, tempfile.TemporaryFile() as stderr_file:
 
-        finally:
-            pass
+            # Run the command
+            popen = subprocess.Popen(cmd_to_run, stdout=stdout_file, stderr=stderr_file)
+            exit_code = popen.wait()
+
+            if exit_code != 0:
+
+                stderr_file.seek(0)
+
+                stderr = stderr_file.read()
+
+                if is_py3:
+                    stderr = stderr.decode()
+                raise PhantomJSError(stderr)
+
+
 
         return self._return_response(file_src, basename) if make_response else file_src
 
