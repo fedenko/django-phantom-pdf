@@ -41,7 +41,7 @@ DEFAULT_SETTINGS = dict(
 def option_to_str((option_name, arg)):
     if isinstance(arg, bool):
         arg = str(arg).lower()
-    return "=".join(["--{0}".format(option_name), arg])
+    return "=".join(["--{0}".format(option_name.replace("_", "-")), arg])
 
 class PhantomJSError(Exception):
     pass
@@ -206,22 +206,17 @@ class RequestToPDF(object):
         # - http://stackoverflow.com/questions/24979333/why-does-popen-hang-when-used-in-django-view/24979432#24979432
         # - https://thraxil.org/users/anders/posts/2008/03/13/Subprocess-Hanging-PIPE-is-your-enemy/
         with tempfile.TemporaryFile() as stdout_file, tempfile.TemporaryFile() as stderr_file:
-
             # Run the command
             popen = subprocess.Popen(cmd_to_run, stdout=stdout_file, stderr=stderr_file)
+            logger.info("Run the command: %s", " ".join(cmd_to_run))
             exit_code = popen.wait()
 
             if exit_code != 0:
-
                 stderr_file.seek(0)
-
                 stderr = stderr_file.read()
-
                 if is_py3:
                     stderr = stderr.decode()
                 raise PhantomJSError(stderr)
-
-
 
         return self._return_response(file_src, basename) if make_response else file_src
 
