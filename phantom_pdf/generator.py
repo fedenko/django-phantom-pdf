@@ -38,7 +38,8 @@ DEFAULT_SETTINGS = dict(
     KEEP_PDF_FILES=False,
 )
 
-def option_to_str((option_name, arg)):
+def option_to_str(item):
+    option_name, arg = item
     if isinstance(arg, bool):
         arg = str(arg).lower()
     return "=".join(["--{0}".format(option_name.replace("_", "-")), arg])
