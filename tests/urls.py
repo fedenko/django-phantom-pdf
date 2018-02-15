@@ -1,11 +1,12 @@
-from django.conf.urls import patterns, include, url
+from __future__ import absolute_import
+from django.conf.urls import include, url
 
 from django.contrib import admin
 admin.autodiscover()
 
-from test_app.views import IndexView
+from tests.test_app.views import IndexView
 
-urlpatterns = patterns('',
+urlpatterns = [
     url(r'^$', IndexView.as_view(), name='index'),
     url(r'^admin/', include(admin.site.urls)),
-)
+]

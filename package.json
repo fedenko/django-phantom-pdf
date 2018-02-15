@@ -7,7 +7,7 @@
     "gulp": "^3.9.1",
     "gulp-plumber": "^1.0.1",
     "gulp-sourcemaps": "^1.6.0",
-    "phantomjs-prebuilt": "^2.1.12",
+    "phantomjs-prebuilt": "^2.1.16",
     "webpack-stream": "^3.2.0"
   },
   "scripts": {
